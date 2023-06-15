@@ -40,13 +40,52 @@ public class MappingTests
     }
 
     [Fact]
+    public void CreateUserDtoToUser_Correct()
+    {
+        // Arrange
+        var expected = _fixture.Create<CreateUserDto>();
+
+        // Act
+        var result = _mapper.Map<User>(expected);
+
+        // Assert
+        Assert.Equal(expected.Email, result.Email);
+        Assert.Equal(expected.Name, result.Name);
+        Assert.Equal(expected.Patronymic, result.Patronymic);
+        Assert.Equal(expected.Surname, result.Surname);
+    }
+
+    [Fact]
+    public void InvoiceToInvoiceDto_Correct()
+    {
+        // Arrange
+        var expected = _fixture.Create<Invoice>();
+
+        // Act
+        var result = _mapper.Map<InvoiceDto>(expected);
+
+        // Assert
+        Assert.Equal(expected.InvoiceNum, result.InvoiceNum);
+    }
+
+    [Fact]
+    public void ItemToCarOperation_Correct()
+    {
+        // Arrange
+        var expected = GetItem();
+
+        // Act
+        var result = _mapper.Map<CarOperation>(expected);
+
+        // Assert
+        Assert.Equal(expected.LastOperationName, result.OperationName);
+    }
+
+    [Fact]
     public void ItemToCarTest_Correct()
     {
         // Arrange
-        var expected = _fixture
-            .Build<UploadDataTrainDto.Item>()
-            .With(c => c.WhenLastOperationForXml, _fixture.Create<DateTime>().ToString)
-            .Create();
+        var expected = GetItem();
 
         // Act
         var result = _mapper.Map<Car>(expected);
@@ -60,5 +99,108 @@ public class MappingTests
     }
 
     [Fact]
+    public void ItemToFreight_Correct()
+    {
+        // Arrange
+        var expected = GetItem();
+
+        // Act
+        var result = _mapper.Map<Freight>(expected);
+
+        // Assert
+        Assert.Equal(expected.FreightEtsngName, result.FreightEtsngName);
+    }
+
+    [Fact]
+    public void ItemToInvoice_Correct()
+    {
+        // Arrange
+        var expected = GetItem();
+
+        // Act
+        var result = _mapper.Map<Invoice>(expected);
+
+        // Assert
+        Assert.Equal(expected.InvoiceNum, result.InvoiceNum);
+    }
+
+    [Fact]
+    public void ItemToTrain_Correct()
+    {
+        // Arrange
+        var expected = GetItem();
+
+        // Act
+        var result = _mapper.Map<Train>(expected);
+
+        // Assert
+        Assert.Equal(expected.TrainNumber, result.Number);
+        Assert.Empty(result.Cars);
+    }
+
+    [Fact]
+    public void ItemToWayPoint_Correct()
+    {
+        // Arrange
+        var expected = GetItem();
+
+        // Act
+        var result = _mapper.Map<WayPoint>(expected);
+
+        // Assert
+        Assert.Equal(expected.WhenLastOperation.UtcDateTime, result.OperationDate);
+        Assert.Equal(expected.LastOperationName, result.Operation.OperationName);
+    }
+
+    [Fact]
     public void Mapper_AllDestinationsFilledOrIgnored() => _mapper.ConfigurationProvider.AssertConfigurationIsValid();
+
+    [Fact]
+    public void StationToStationDto_Correct()
+    {
+        // Arrange
+        var expected = _fixture.Create<Station>();
+
+        // Act
+        var result = _mapper.Map<StationDto>(expected);
+
+        // Assert
+        Assert.Equal(expected.StationName, result.StationName);
+    }
+
+    [Fact]
+    public void TrainToTrainDto_Correct()
+    {
+        // Arrange
+        var expected = _fixture.Create<Train>();
+
+        // Act
+        var result = _mapper.Map<TrainDto>(expected);
+
+        // Assert
+        Assert.Equal(expected.Number, result.Number);
+        Assert.Equal(expected.TrainIndexCombined, result.TrainIndexCombined);
+    }
+
+    [Fact]
+    public void UserToUserDto_Correct()
+    {
+        // Arrange
+        var expected = _fixture.Create<User>();
+
+        // Act
+        var result = _mapper.Map<UserDto>(expected);
+
+        // Assert
+        Assert.Equal(expected.Email, result.Email);
+        Assert.Equal(expected.Name, result.Name);
+        Assert.Equal(expected.Patronymic, result.Patronymic);
+        Assert.Equal(expected.Surname, result.Surname);
+        Assert.Equal(expected.Id, result.Id);
+    }
+
+    private UploadDataTrainDto.Item GetItem() => _fixture
+        .Build<UploadDataTrainDto.Item>()
+        .With(c => c.WhenLastOperationForXml, _fixture.Create<DateTime>().ToString)
+        .Create();
 }
