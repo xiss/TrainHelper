@@ -7,19 +7,19 @@ using TrainHelper.WebApi;
 using TrainHelper.WebApi.Config;
 using TrainHelper.WebApi.Middleware;
 using TrainHelper.WebApi.Services;
-using TrainHelper.WebApi.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
 //Configuration
-var authSection = builder.Configuration.GetSection(AppConfig.SectionName);
-var authConfig = authSection.Get<AppConfig>();
+var authSection = builder.Configuration.GetSection(AuthSettings.SectionName);
+var authConfig = authSection.Get<AuthSettings>();
+var appSection = builder.Configuration.GetSection(AppSettings.SectionName);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(o =>
 {
-    o.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme()
+    o.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
     {
         Description = "Fill token",
         Name = "Authorization",
@@ -27,12 +27,12 @@ builder.Services.AddSwaggerGen(o =>
         Type = SecuritySchemeType.ApiKey,
         Scheme = JwtBearerDefaults.AuthenticationScheme
     });
-    o.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    o.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
-            new OpenApiSecurityScheme()
+            new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference()
+                Reference = new OpenApiReference
                 {
                     Type = ReferenceType.SecurityScheme,
                     Id = JwtBearerDefaults.AuthenticationScheme
@@ -54,14 +54,15 @@ builder.Services.AddAutoMapper(typeof(MapperProfile));
 builder.Services.AddDbContext<TrainHelper.DAL.DataContext>(options => options
         .UseNpgsql(builder.Configuration.GetConnectionString("PostgreSql")));
 
-builder.Services.Configure<AppConfig>(authSection);
+builder.Services.Configure<AppSettings>(appSection);
+builder.Services.Configure<AuthSettings>(authSection);
 
 //Authentication setup
 builder.Services.AddAuthentication(o => o.DefaultScheme = JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>
     {
         o.RequireHttpsMetadata = false;
-        o.TokenValidationParameters = new TokenValidationParameters()
+        o.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidIssuer = authConfig.Issuer,

@@ -5,33 +5,34 @@ using OfficeOpenXml.Style;
 using TrainHelper.DAL.Providers;
 using TrainHelper.WebApi.Config;
 using TrainHelper.WebApi.Dto;
-using TrainHelper.WebApi.Services.Interfaces;
 using static TrainHelper.WebApi.Dto.NlDetailsReportDto;
 
 namespace TrainHelper.WebApi.Services;
 
-public class ReportGeneratorService : IReportGeneratorService, IDisposable
+public class ReportGeneratorService : IReportGeneratorService
 {
+    private readonly AppSettings _appSettings;
     private readonly IMapper _mapper;
     private readonly ITrainDataProvider _trainDataProvider;
-    private readonly AppConfig _appConfig;
 
-    public ReportGeneratorService(ITrainDataProvider trainDataProvider, IMapper mapper, IOptions<AppConfig> appConfig)
+    public ReportGeneratorService(ITrainDataProvider trainDataProvider, IMapper mapper, IOptions<AppSettings> appConfig)
     {
         _trainDataProvider = trainDataProvider;
         _mapper = mapper;
-        _appConfig = appConfig.Value;
+        _appSettings = appConfig.Value;
     }
 
-    public void Dispose() => _trainDataProvider.Dispose();
-
+    /// <summary>
+    /// Get NL details for report by train number
+    /// </summary>
+    /// <param name="trainNumber"></param>
     public async Task<NlDetailsReportDto?> GetNlDetailsReport(int trainNumber)
     {
         NlDetailsReportDto? result = null;
         var train = await _trainDataProvider.GetTrainDetail(trainNumber);
         if (train != null)
         {
-            result = new NlDetailsReportDto()
+            result = new NlDetailsReportDto
             {
                 TrainNumber = train.Number,
                 TailNumber = train.TrainIndexCombined.Split('-')[1],
@@ -39,19 +40,31 @@ public class ReportGeneratorService : IReportGeneratorService, IDisposable
                 WhenLastOperation = train.Cars.FirstOrDefault()?.WayPoints[0].OperationDate ?? DateTimeOffset.MinValue,
                 Cars = train.Cars.Select(c => _mapper.Map<CarDto>(c)).OrderBy(c => c.PositionInTrain).ToList(),
                 Subtotals = train.Cars.GroupBy(c => c.Freight.FreightEtsngName).Select(g =>
-                    new NlDetailsReportSubtotal(g.Count(), g.Key, g.Sum(g =>(double) g.FreightTotalWeightKg / 1000))).ToList()
+                    new NlDetailsReportSubtotal(g.Count(), g.Key, g.Sum(g => (double)g.FreightTotalWeightKg / 1000))).ToList()
             };
         }
 
         return result;
     }
 
+    /// <summary>
+    /// Get NL report as .xlsx file as byte array
+    /// </summary>
+    /// <param name="trainNumber"></param>
     public async Task<byte[]> GetNlDetailsReportXlsx(int trainNumber)
     {
         var reportData = await GetNlDetailsReport(trainNumber);
+        Stream stream;
         if (reportData == null) return Array.Empty<byte>();
+        try
+        {
+            stream = File.OpenRead(_appSettings.NlReportTemplate);
+        }
+        catch
+        {
+            return Array.Empty<byte>();
+        }
 
-        Stream stream = File.OpenRead(_appConfig.NlReportTemplate);//TODO Может надо обработать ессли файл нет
         using var package = new ExcelPackage(stream);
         var sheet = package.Workbook.Worksheets[0];
 

@@ -7,9 +7,9 @@ using System.Security.Claims;
 using TrainHelper.WebApi.Constants;
 using TrainHelper.WebApi.Controllers;
 using TrainHelper.WebApi.Dto;
-using TrainHelper.WebApi.Services.Interfaces;
+using TrainHelper.WebApi.Services;
 
-namespace TrainHelper.Tests;
+namespace TrainHelper.WebApi.Tests.Controllers;
 
 public class ReportControllerTests
 {

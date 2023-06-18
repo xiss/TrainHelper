@@ -1,11 +1,10 @@
 ﻿using TrainHelper.DAL.Entities;
 
-namespace TrainHelper.DAL.Providers
+namespace TrainHelper.DAL.Providers;
+
+public interface ITrainDataProvider
 {
-    public interface ITrainDataProvider
-    {
-        Task<bool> AddTrain(Train train);
-        void Dispose();
-        Task<Train?> GetTrainDetail(int trainNumber);
-    }
+    Task<bool> UpsertTrain(Train train);
+    void Dispose();
+    Task<Train?> GetTrainDetail(int trainNumber);
 }

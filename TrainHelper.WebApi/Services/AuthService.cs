@@ -11,23 +11,26 @@ using TrainHelper.WebApi.Config;
 using TrainHelper.WebApi.Constants;
 using TrainHelper.WebApi.Dto;
 using TrainHelper.WebApi.Dto.Token;
-using TrainHelper.WebApi.Services.Interfaces;
 
 namespace TrainHelper.WebApi.Services;
 
 public class AuthService : IAuthService
 {
-    private readonly AppConfig _appConfig;
+    private readonly AuthSettings _authSettings;
     private readonly IMapper _mapper;
     private readonly IUserDataProvider _userDataProvider;
 
-    public AuthService(IOptions<AppConfig> appConfig, IMapper mapper, IUserDataProvider userDataProvider)
+    public AuthService(IOptions<AuthSettings> appConfig, IMapper mapper, IUserDataProvider userDataProvider)
     {
-        _appConfig = appConfig.Value;
+        _authSettings = appConfig.Value;
         _mapper = mapper;
         _userDataProvider = userDataProvider;
     }
 
+    /// <summary>
+    /// Create new user by dto
+    /// </summary>
+    /// <param name="dto"></param>
     public async Task CreateUser(CreateUserDto dto)
     {
         var user = _mapper.Map<User>(dto);
@@ -35,8 +38,11 @@ public class AuthService : IAuthService
         await _userDataProvider.AddUser(user);
     }
 
-    public void Dispose() => _userDataProvider.Dispose();
-
+    /// <summary>
+    /// Get token by login and password
+    /// </summary>
+    /// <param name="login"></param>
+    /// <param name="password"></param>
     public async Task<TokenResultDto> GetToken(string login, string password)
     {
         var user = await GetUserByCredential(login, password);
@@ -44,23 +50,38 @@ public class AuthService : IAuthService
         var session = await _userDataProvider.AddUserSession(new()
         {
             Created = DateTimeOffset.UtcNow,
-            User = user
+            User = user,
+            RefreshTokenId = Guid.NewGuid(),
         });
 
         return new TokenResultDto(Token: GenerateTokens(session));
     }
 
+    /// <summary>
+    /// Get token by refresh token
+    /// </summary>
+    /// <param name="refreshToken"></param>
     public async Task<TokenResultDto> GetTokenByRefreshToken(string refreshToken)
     {
-        var validationParameters = new TokenValidationParameters()
+        ClaimsPrincipal principal;
+        SecurityToken securityToken;
+        var validationParameters = new TokenValidationParameters
         {
             ValidateIssuer = false,
             ValidateIssuerSigningKey = true,
             ValidateAudience = false,
             ValidateLifetime = true,
-            IssuerSigningKey = _appConfig.GetSymmetricSecurityKey()
+            IssuerSigningKey = _authSettings.GetSymmetricSecurityKey()
         };
-        var principal = new JwtSecurityTokenHandler().ValidateToken(refreshToken, validationParameters, out var securityToken);
+
+        try
+        {
+            principal = new JwtSecurityTokenHandler().ValidateToken(refreshToken, validationParameters, out securityToken);
+        }
+        catch (Exception e)
+        {
+            return new TokenResultDto(Error: $"Invalid security token - {e.Message}");
+        }
 
         if (securityToken is not JwtSecurityToken jwtSecurityToken
             || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256,
@@ -83,6 +104,11 @@ public class AuthService : IAuthService
         return new TokenResultDto(Token: GenerateTokens(session));
     }
 
+    /// <summary>
+    /// Get user by login and password
+    /// </summary>
+    /// <param name="login"></param>
+    /// <param name="password"></param>
     public async Task<User?> GetUserByCredential(string login, string password)
     {
         var user = await _userDataProvider.GetUserByLogin(login);
@@ -121,12 +147,12 @@ public class AuthService : IAuthService
             new(ClaimNames.SessionId, session.Id.ToString())
         };
         var securityToken = new JwtSecurityToken(
-            issuer: _appConfig.Issuer,
-            audience: _appConfig.Audience,
+            issuer: _authSettings.Issuer,
+            audience: _authSettings.Audience,
             notBefore: now,
             claims: claims,
-            expires: now.AddMinutes(_appConfig.LifeTime),
-            signingCredentials: new SigningCredentials(_appConfig.GetSymmetricSecurityKey(),
+            expires: now.AddMinutes(_authSettings.LifeTime),
+            signingCredentials: new SigningCredentials(_authSettings.GetSymmetricSecurityKey(),
                 SecurityAlgorithms.HmacSha256));
         var encodedToken = new JwtSecurityTokenHandler().WriteToken(securityToken);
 
@@ -138,8 +164,8 @@ public class AuthService : IAuthService
         var refreshToken = new JwtSecurityToken(
             notBefore: now,
             claims: claims,
-            expires: now.AddHours(_appConfig.LifeTime),
-            signingCredentials: new SigningCredentials(_appConfig.GetSymmetricSecurityKey(),
+            expires: now.AddHours(_authSettings.LifeTime),
+            signingCredentials: new SigningCredentials(_authSettings.GetSymmetricSecurityKey(),
                 SecurityAlgorithms.HmacSha256));
         var encodedRefreshToken = new JwtSecurityTokenHandler().WriteToken(refreshToken);
 

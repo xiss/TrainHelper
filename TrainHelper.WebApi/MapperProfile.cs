@@ -23,7 +23,9 @@ public class MapperProfile : Profile
             .ForMember(d => d.FreightEtsngName, m => m.MapFrom(s => s.Freight.FreightEtsngName))
             .ForMember(d => d.WhenLastOperation, m => m.MapFrom(s => s.WayPoints.Max(w => w.OperationDate)))
             .ForMember(d => d.FreightTotalWeightTn, m => m.MapFrom(s => (double)s.FreightTotalWeightKg / 1000))
-            .ForMember(d => d.LastOperationName, m => m.MapFrom(s => s.WayPoints.OrderByDescending(w => w.OperationDate).First().Operation.OperationName)); //TODO
+            .ForMember(d => d.LastOperationName, m => m.MapFrom(s => s.WayPoints
+                .OrderByDescending(w => w.OperationDate)
+                .First().Operation.OperationName));
 
         // Invoice
         CreateMap<UploadDataTrainDto.Item, Invoice>()

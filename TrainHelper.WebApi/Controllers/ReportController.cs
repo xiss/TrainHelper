@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TrainHelper.WebApi.Dto;
-using TrainHelper.WebApi.Services.Interfaces;
+using TrainHelper.WebApi.Services;
 
 namespace TrainHelper.WebApi.Controllers;
 
@@ -16,13 +15,20 @@ public class ReportController : Controller
 
     public ReportController(IReportGeneratorService reportGeneratorService) => _reportGeneratorService = reportGeneratorService;
 
-    [HttpGet]
+    /// <summary>
+    /// Get NL report by train number
+    /// </summary>
+    /// <param name="trainNumber"></param>
     public async Task<ActionResult> GetNlDetail(int trainNumber)
     {
         var result = await _reportGeneratorService.GetNlDetailsReport(trainNumber);
-        return result == null ? new NotFoundResult() :new JsonResult(result) ;
+        return result == null ? new NotFoundResult() : new JsonResult(result);
     }
 
+    /// <summary>
+    /// Get NL report by train number in .xlsx format
+    /// </summary>
+    /// <param name="trainNumber"></param>
     [HttpGet]
     public async Task<ActionResult> GetNlDetailXlsx(int trainNumber)
     {

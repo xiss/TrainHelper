@@ -6,18 +6,17 @@ using Moq;
 using System.Security.Claims;
 using TrainHelper.WebApi.Constants;
 using TrainHelper.WebApi.Controllers;
-using TrainHelper.WebApi.Dto;
-using TrainHelper.WebApi.Services.Interfaces;
+using TrainHelper.WebApi.Services;
 
 namespace TrainHelper.WebApi.Tests.Controllers;
 
-public class UploadControllerTest
+public class UploadControllerTests
 {
     private const string TestUrl = "testUrl";
     private readonly IFixture _fixture;
     private readonly int _testUserId;
 
-    public UploadControllerTest()
+    public UploadControllerTests()
     {
         _testUserId = 1;
         _fixture = new Fixture();
@@ -35,7 +34,7 @@ public class UploadControllerTest
         var result = await controller.UploadData(file);
 
         // Assert
-        Assert.IsType<ActionResult<UploadDataResultDto>>(result);
+        Assert.IsType<JsonResult>(result);
     }
 
     private UploadController GetMockUploadController(Mock<IUploadService>? service = null)

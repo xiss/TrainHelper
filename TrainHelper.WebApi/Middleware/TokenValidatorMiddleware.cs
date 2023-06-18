@@ -9,7 +9,7 @@ public class TokenValidatorMiddleware
 
     public TokenValidatorMiddleware(RequestDelegate next) => _next = next;
 
-    public async Task InvokeAsync(HttpContext context, UserDataProvider userDataProvider)
+    public async Task InvokeAsync(HttpContext context, IUserDataProvider userDataProvider)
     {
         var flag = true;
         var sessionIdString = context.User.Claims.FirstOrDefault(c => c.Type == ClaimNames.SessionId)?.Value;

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TrainHelper.WebApi.Dto;
 using TrainHelper.WebApi.Dto.Token;
-using TrainHelper.WebApi.Services.Interfaces;
+using TrainHelper.WebApi.Services;
 
 namespace TrainHelper.WebApi.Controllers;
 
@@ -13,15 +13,33 @@ public class AuthController : Controller
 
     public AuthController(IAuthService authService) => _authService = authService;
 
+    /// <summary>
+    /// Get token by refresh token
+    /// </summary>
+    /// <param name="dto"></param>
     [HttpPost]
-    public async Task<TokenResultDto> RefreshToken(RefreshTokenRequestDto dto)
-        => await _authService.GetTokenByRefreshToken(dto.RefreshToken);
+    public async Task<ActionResult> RefreshToken(RefreshTokenRequestDto dto)
+    {
+        var result = await _authService.GetTokenByRefreshToken(dto.RefreshToken);
+        return result.Error != null ? Unauthorized(result.Error) : new JsonResult(result);
+    }
 
+    /// <summary>
+    /// Register new user
+    /// </summary>
+    /// <param name="dto"></param>
     [HttpPost]
     public async Task RegisterUser(CreateUserDto dto)
         => await _authService.CreateUser(dto);
 
+    /// <summary>
+    /// Get token by login and password
+    /// </summary>
+    /// <param name="dto"></param>
     [HttpPost]
-    public async Task<TokenResultDto> Token(TokenRequestDto dto)
-        => await _authService.GetToken(dto.Login, dto.Password);
+    public async Task<ActionResult> Token(TokenRequestDto dto)
+    {
+        var result = await _authService.GetToken(dto.Login, dto.Password);
+        return result.Error != null ? Unauthorized(result.Error) : new JsonResult(result);
+    }
 }

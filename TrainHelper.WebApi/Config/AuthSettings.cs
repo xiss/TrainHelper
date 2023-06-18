@@ -3,14 +3,13 @@ using System.Text;
 
 namespace TrainHelper.WebApi.Config;
 
-public class AppConfig
+public class AuthSettings
 {
-    public static readonly string SectionName = "App";
+    public static readonly string SectionName = "AuthSettings";
     public string Audience { get; set; } = string.Empty;
     public string Issuer { get; set; } = string.Empty;
     public string Key { get; set; } = string.Empty;
     public int LifeTime { get; set; }
-    public string NlReportTemplate { get; set; } = string.Empty;
 
     public SymmetricSecurityKey GetSymmetricSecurityKey()
     {
