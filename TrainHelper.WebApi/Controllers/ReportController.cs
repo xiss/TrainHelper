@@ -19,6 +19,7 @@ public class ReportController : Controller
     /// Get NL report by train number
     /// </summary>
     /// <param name="trainNumber"></param>
+    [HttpGet]
     public async Task<ActionResult> GetNlDetail(int trainNumber)
     {
         var result = await _reportGeneratorService.GetNlDetailsReport(trainNumber);
